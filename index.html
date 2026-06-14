@@ -218,9 +218,55 @@
             margin-top: 16px;
         }
         .btn-reload:active { opacity: .7; }
+
+        /* KI-Modus: O-Bar nicht drehen */
+        #bar-o.ki-mode { transform: none; }
+
+        /* Start-Screen */
+        #start-screen {
+            display: flex; position: fixed; inset: 0; z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center; gap: 24px;
+            background: #0f172a;
+        }
+        #start-screen h1 { font-size: 36px; font-weight: 900; color: #fff; letter-spacing: -1px; }
+        .ss-preview { display: flex; align-items: center; gap: 14px; }
+        .ss-x { font-size: 40px; font-weight: 900; color: #f97316; line-height: 1; }
+        .ss-o { font-size: 40px; font-weight: 900; color: #38bdf8; line-height: 1; }
+        .ss-vs { font-size: 15px; font-weight: 700; color: rgba(255,255,255,.4); }
+        .ss-btns { display: flex; flex-direction: column; gap: 11px; width: 240px; }
+        .ss-btn {
+            padding: 15px; border-radius: 14px; border: none;
+            font-size: 16px; font-weight: 700; cursor: pointer;
+            transition: transform .1s, opacity .1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ss-btn:active { transform: scale(.96); opacity: .85; }
+        .ss-btn.prim { background: #fff; color: #0f172a; }
+        .ss-btn.sec  { background: rgba(255,255,255,.1); color: #fff; }
+
+        /* KI-Denkindikator */
+        #ki-ind {
+            font-size: 13px; font-weight: 600;
+            color: rgba(255,255,255,.5); display: none;
+        }
+        #ki-ind.show { display: inline; }
     </style>
 </head>
 <body>
+
+<!-- Start-Screen -->
+<div id="start-screen">
+    <h1>TicTacToe</h1>
+    <div class="ss-preview">
+        <span class="ss-x">X</span>
+        <span class="ss-vs">vs</span>
+        <span class="ss-o">O</span>
+    </div>
+    <div class="ss-btns">
+        <button class="ss-btn prim" onclick="startGame('2p')">&#128101; 2 Spieler</button>
+        <button class="ss-btn sec"  onclick="startGame('ki')">&#129302; Gegen KI</button>
+    </div>
+</div>
 
 <div id="app">
     <!-- Spieler O (oben, gedreht) -->
@@ -249,6 +295,7 @@
     <!-- Status -->
     <div id="status">
         <span id="status-text">X beginnt</span>
+        <span id="ki-ind">KI denkt…</span>
         <button id="btn-new" onclick="newGame()">Neue Runde</button>
     </div>
 
@@ -270,8 +317,9 @@
             <button id="btn-info-close" onclick="document.getElementById('info-overlay').classList.remove('show')">Schließen</button>
         </div>
         <div id="info-sheet-body">
-            <h3>Spieler</h3>
-            <p><strong style="color:#f97316">X</strong> sitzt unten, <strong style="color:#38bdf8">O</strong> sitzt oben (Display gedreht, sodass jeder auf seine Seite schaut).</p>
+            <h3>Spielmodi</h3>
+            <p><strong>2 Spieler:</strong> <strong style="color:#f97316">X</strong> sitzt unten, <strong style="color:#38bdf8">O</strong> sitzt oben (Display gedreht, sodass jeder auf seine Seite schaut).</p>
+            <p><strong>Gegen KI:</strong> Du spielst <strong style="color:#f97316">X</strong>, die KI spielt <strong style="color:#38bdf8">O</strong> und spielt perfekt (Minimax).</p>
 
             <h3>Ziel</h3>
             <p>3 eigene Symbole in einer Reihe (waagerecht, senkrecht oder diagonal).</p>
@@ -290,47 +338,77 @@
 <script>
 const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
-let board = Array(9).fill(null);
-let current = 'X';
-let gameOver = false;
-let scores = { X: 0, O: 0 };
+let board, current, gameOver, scores, mode, kiRunning;
 
-const cells = document.querySelectorAll('.cell');
+const cells     = document.querySelectorAll('.cell');
 const statusText = document.getElementById('status-text');
-const btnNew = document.getElementById('btn-new');
-const barX = document.getElementById('bar-x');
-const barO = document.getElementById('bar-o');
+const btnNew    = document.getElementById('btn-new');
+const kiInd     = document.getElementById('ki-ind');
+const barX      = document.getElementById('bar-x');
+const barO      = document.getElementById('bar-o');
+
+// ===== START =====
+function startGame(m) {
+    mode = m;
+    scores = { X: 0, O: 0 };
+    document.getElementById('start-screen').style.display = 'none';
+
+    if (m === 'ki') {
+        barO.classList.add('ki-mode');
+        barO.querySelector('.player-label').textContent = 'KI';
+    }
+
+    barX.style.color = '#f97316';
+    barO.style.color = '#38bdf8';
+    newGame();
+}
+
+function showMenu() {
+    document.getElementById('start-screen').style.display = 'flex';
+}
+
+// ===== GAME =====
+function newGame() {
+    board = Array(9).fill(null);
+    gameOver = false; kiRunning = false;
+    current = 'X';
+    cells.forEach(c => { c.textContent = ''; c.className = 'cell'; });
+    statusText.textContent = 'X beginnt';
+    kiInd.classList.remove('show');
+    btnNew.classList.remove('show');
+    updateActiveBar();
+}
 
 function updateActiveBar() {
     barX.classList.toggle('is-active', current === 'X' && !gameOver);
     barO.classList.toggle('is-active', current === 'O' && !gameOver);
-    barX.style.color = '#f97316';
-    barO.style.color = '#38bdf8';
 }
 
-function checkWin() {
-    for (const [a, b, c] of WINS) {
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-            return [a, b, c];
-        }
-    }
+function findWin(b) {
+    for (const [a,c,d] of WINS)
+        if (b[a] && b[a] === b[c] && b[a] === b[d]) return [a,c,d];
     return null;
 }
 
 function handleTap(i) {
-    if (gameOver || board[i]) return;
-    board[i] = current;
+    if (!mode || gameOver || kiRunning || board[i]) return;
+    if (mode === 'ki' && current === 'O') return;
+    placeMove(i);
+}
 
+function placeMove(i) {
+    board[i] = current;
     const cell = cells[i];
     cell.textContent = current;
     cell.classList.add('taken', current.toLowerCase());
 
-    const win = checkWin();
+    const win = findWin(board);
     if (win) {
         win.forEach(idx => cells[idx].classList.add('win'));
         scores[current]++;
         document.getElementById(`score-${current.toLowerCase()}`).textContent = scores[current];
-        statusText.textContent = `${current} gewinnt! 🎉`;
+        const label = (mode === 'ki' && current === 'O') ? 'KI' : current;
+        statusText.textContent = `${label} gewinnt! 🎉`;
         gameOver = true;
         btnNew.classList.add('show');
         barX.classList.remove('is-active');
@@ -348,23 +426,60 @@ function handleTap(i) {
     }
 
     current = current === 'X' ? 'O' : 'X';
-    statusText.textContent = `${current} ist dran`;
     updateActiveBar();
+
+    if (mode === 'ki' && current === 'O') {
+        kiRunning = true;
+        statusText.textContent = '';
+        kiInd.classList.add('show');
+        setTimeout(doKiMove, 250);
+    } else {
+        statusText.textContent = `${current} ist dran`;
+    }
 }
 
-function newGame() {
-    board = Array(9).fill(null);
-    gameOver = false;
-    current = 'X';
-    cells.forEach(c => {
-        c.textContent = '';
-        c.className = 'cell';
+function doKiMove() {
+    kiInd.classList.remove('show');
+    kiRunning = false;
+    const i = bestMove(board);
+    if (i >= 0) placeMove(i);
+}
+
+// ===== MINIMAX =====
+function bestMove(b) {
+    let best = -Infinity, bestI = -1;
+    b.forEach((v, i) => {
+        if (!v) {
+            b[i] = 'O';
+            const s = minimax(b, false, 0);
+            b[i] = null;
+            if (s > best) { best = s; bestI = i; }
+        }
     });
-    statusText.textContent = 'X beginnt';
-    btnNew.classList.remove('show');
-    updateActiveBar();
+    return bestI;
 }
 
+function minimax(b, isMax, depth) {
+    const w = findWin(b);
+    if (w) return b[w[0]] === 'O' ? 10 - depth : depth - 10;
+    if (b.every(v => v)) return 0;
+
+    if (isMax) {
+        let best = -Infinity;
+        b.forEach((v, i) => {
+            if (!v) { b[i]='O'; best=Math.max(best,minimax(b,false,depth+1)); b[i]=null; }
+        });
+        return best;
+    } else {
+        let best = Infinity;
+        b.forEach((v, i) => {
+            if (!v) { b[i]='X'; best=Math.min(best,minimax(b,true,depth+1)); b[i]=null; }
+        });
+        return best;
+    }
+}
+
+// ===== EVENTS =====
 cells.forEach(cell => {
     cell.addEventListener('click', () => handleTap(+cell.dataset.i));
     cell.addEventListener('touchend', e => {
@@ -373,10 +488,8 @@ cells.forEach(cell => {
     }, { passive: false });
 });
 
-updateActiveBar();
-
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/tictactoe/sw.js', { scope: '/tictactoe/' })
+    navigator.serviceWorker.register('sw.js', { scope: './' })
         .then(reg => {
             reg.update();
             reg.addEventListener('updatefound', () => {
