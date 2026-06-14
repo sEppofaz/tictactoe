@@ -1,9 +1,31 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -6 36 36">
-  <rect x="-6" y="-6" width="36" height="36" fill="#0f172a"/>
-  <g stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="8" y1="2" x2="8" y2="22"/>
-    <line x1="16" y1="2" x2="16" y2="22"/>
-    <line x1="2" y1="8" x2="22" y2="8"/>
-    <line x1="2" y1="16" x2="22" y2="16"/>
-  </g>
+  <!-- Background: kräftiges Lila -->
+  <rect x="-6" y="-6" width="36" height="36" fill="#7c3aed"/>
+
+  <!-- Gitterlinien (weiß, halbtransparent) -->
+  <line x1="8"  y1="0"  x2="8"  y2="24" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="16" y1="0"  x2="16" y2="24" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="0"  y1="8"  x2="24" y2="8"  stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="0"  y1="16" x2="24" y2="16" stroke="rgba(255,255,255,0.45)" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- X oben-links (orange) -->
+  <line x1="1.5" y1="1.5" x2="6.5" y2="6.5" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>
+  <line x1="6.5" y1="1.5" x2="1.5" y2="6.5" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- O oben-rechts (hellblau) -->
+  <circle cx="20" cy="4" r="2.8" fill="none" stroke="#67e8f9" stroke-width="2.4"/>
+
+  <!-- X Mitte (orange, größer) -->
+  <line x1="9.5"  y1="9.5"  x2="14.5" y2="14.5" stroke="#f97316" stroke-width="2.8" stroke-linecap="round"/>
+  <line x1="14.5" y1="9.5"  x2="9.5"  y2="14.5" stroke="#f97316" stroke-width="2.8" stroke-linecap="round"/>
+
+  <!-- O unten-links (hellblau) -->
+  <circle cx="4" cy="20" r="2.8" fill="none" stroke="#67e8f9" stroke-width="2.4"/>
+
+  <!-- X unten-rechts (orange) – X gewinnt diagonal! -->
+  <line x1="17.5" y1="17.5" x2="22.5" y2="22.5" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>
+  <line x1="22.5" y1="17.5" x2="17.5" y2="22.5" stroke="#fb923c" stroke-width="2.4" stroke-linecap="round"/>
+
+  <!-- Gewinn-Linie diagonal (gelb, setzt X-Diagonale in Szene) -->
+  <line x1="4" y1="4" x2="20" y2="20" stroke="#fde047" stroke-width="1.8" stroke-opacity="0.55" stroke-linecap="round"/>
 </svg>

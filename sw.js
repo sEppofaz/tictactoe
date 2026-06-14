@@ -1,4 +1,4 @@
-const CACHE = 'tictactoe-v1';
+const CACHE = 'tictactoe-v2';
 const SHELL = ['/tictactoe/', '/tictactoe/manifest.json', '/tictactoe/icon-192.png', '/tictactoe/icon-512.png', '/tictactoe/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
